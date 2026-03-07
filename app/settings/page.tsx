@@ -1,22 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, User, Phone, LogOut } from "lucide-react";
+import { ArrowLeft, Camera, User, Phone, LogOut, Loader2, Mail, Shield, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { logout as logoutApi, getUserSettings } from "@/services/auth";
+import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
 
 export default function SettingsPage() {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, logout, setUserData } = useAuth();
   const router = useRouter();
   const [name, setName] = useState(user?.name || "");
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserSettings = async () => {
+      try {
+        const response = await getUserSettings();
+        if (response.success && response.data) {
+          setUserData({
+            email: response.data.email,
+            full_name: response.data.full_name,
+            picture: response.data.picture,
+            provider: response.data.provider,
+            email_verified: response.data.email_verified,
+            created_at: response.data.created_at,
+          });
+          
+          setName(response.data.full_name || "");
+          setAvatarPreview(response.data.picture || "");
+        }
+      } catch (error: any) {
+        if (error?.status === 401 || error?.message === "Unauthorized") {
+          router.push("/home");
+        }
+        console.error("Failed to fetch user settings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,20 +66,44 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     updateProfile({ name, avatar: avatarPreview });
-    toast.success("Profile updated successfully!");
+    showSuccessToast("Profile updated successfully!");
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push("/home");
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    
+    try {
+      const response = await logoutApi();
+      
+      if (response.success) {
+        logout();
+        showSuccessToast("Logged out successfully!");
+        router.push("/home");
+      }
+    } catch (error: any) {
+      showErrorToast(error?.message || "Failed to logout. Please try again.");
+      console.error("Logout error:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 backdrop-blur-xl sticky top-0 z-10 bg-background/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/")}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -95,11 +153,11 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Details */}
+          {/* Profile Details */}
           <div className="glass-card p-6 space-y-4">
             <h3 className="text-sm font-medium">Profile Details</h3>
             <div className="space-y-2">
-              <Label htmlFor="name">Display Name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 placeholder="Enter your name"
@@ -108,12 +166,41 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Email Address</Label>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-sm">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                <span>{user?.email}</span>
+                {user?.email_verified && (
+                  <div className="ml-auto" title="Email verified">
+                    <Shield className="w-4 h-4 text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label>Phone Number</Label>
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-sm text-muted-foreground">
                 <Phone className="w-4 h-4" />
-                +91 {user?.phone}
+                <span>{user?.phone || "Not added"}</span>
               </div>
             </div>
+            {user?.provider && (
+              <div className="space-y-2">
+                <Label>Sign-in Provider</Label>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-sm text-muted-foreground">
+                  <span className="capitalize">{user.provider}</span>
+                </div>
+              </div>
+            )}
+            {user?.created_at && (
+              <div className="space-y-2">
+                <Label>Member Since</Label>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+              </div>
+            )}
             <Button onClick={handleSave} className="w-full">
               Save Changes
             </Button>
@@ -131,9 +218,23 @@ export default function SettingsPage() {
           </div>
 
           {/* Logout */}
-          <Button variant="outline" className="w-full text-destructive hover:text-destructive" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
+          <Button 
+            variant="outline" 
+            className="w-full text-destructive hover:text-destructive" 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Logging out...
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </>
+            )}
           </Button>
         </motion.div>
       </main>

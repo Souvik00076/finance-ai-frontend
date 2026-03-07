@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getLast7DaysExpenses } from "@/lib/mockData";
 import { MessageSquare } from "lucide-react";
@@ -16,7 +17,18 @@ const categoryColors: Record<string, string> = {
 };
 
 export function RecentExpenses() {
+  const [mounted, setMounted] = useState(false);
   const expenses = getLast7DaysExpenses().slice(0, 15);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+  };
 
   return (
     <motion.div
@@ -48,7 +60,7 @@ export function RecentExpenses() {
               <div>
                 <p className="text-sm font-medium">{exp.description}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(exp.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  {formatDate(exp.date)}
                 </p>
               </div>
             </div>
