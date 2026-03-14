@@ -4,11 +4,11 @@ const getApiBaseUrl = (): string => {
   const env = process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV;
 
   if (env === 'production') {
-    return 'http://api.beatus.co.in/api/v1';
+    return 'https://spendly-api.souvikb.in/api/v1';
   } else if (env === 'development') {
-    return 'http://dev-api.beatus.co.in/api/v1';
+    return 'http://spendly-api.souvikb.in/api/v1';
   } else {
-    return 'http://localhost:8000/api/v1';
+    return 'http://localhost:8002/api/v1';
   }
 };
 
@@ -16,9 +16,9 @@ export const getAuthRedirectUrlAfterSignup = (): string => {
   const env = process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV;
 
   if (env === 'production') {
-    return 'http://app.beatus.co.in/verify';
+    return 'https://spendly.souvikb.in/verify';
   } else if (env === 'development') {
-    return 'http://dev.beatus.co.in/verify';
+    return 'http://spendly.souvikb.in/verify';
   } else {
     return 'http://localhost:3000/verify';
   }

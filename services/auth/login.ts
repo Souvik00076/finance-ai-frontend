@@ -1,5 +1,5 @@
-import axios, { AxiosError } from "axios";
-import { API_BASE_URL } from "@/lib/constants/api";
+import { AxiosError } from "axios";
+import { apiClient } from "@/lib/api-client";
 import { ApiResponse, ApiError, AuthUser } from "../types";
 
 interface LoginPayload {
@@ -24,38 +24,23 @@ export const loginWithEmailAndPassword = async (
       password,
     };
 
-    const response = await axios.post<ApiResponse<AuthUser>>(
-      `${API_BASE_URL}/auth/login`,
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        withCredentials: true, // Important: This ensures cookies are sent and received
-      }
+    const response = await apiClient.post<ApiResponse<AuthUser>>(
+      "/auth/login",
+      payload
     );
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
+    const axiosError = error as AxiosError<ApiError>;
 
-      // Return formatted error response
-      throw {
-        message:
-          axiosError.response?.data?.message ||
-          "Login failed. Please check your credentials and try again.",
-        success: false,
-        data: null,
-        errors: axiosError.response?.data?.errors,
-      };
-    }
-
-    // Handle non-axios errors
+    // Return formatted error response
     throw {
-      message: "An unexpected error occurred. Please try again.",
+      message:
+        axiosError.response?.data?.message ||
+        "Login failed. Please check your credentials and try again.",
       success: false,
       data: null,
+      errors: axiosError.response?.data?.errors,
     };
   }
 };

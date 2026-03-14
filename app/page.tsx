@@ -31,12 +31,7 @@ export default function DashboardPage() {
           });
         }
       } catch (error: any) {
-        // Check if the error is unauthorized
-        if (error?.status === 401 || error?.message === "Unauthorized") {
-          // Redirect to landing page
-          router.push("/home");
-        }
-        // Silently fail for other errors (like CORS) - don't break the app
+        // Silently fail for errors (like CORS) - don't break the app
         console.error("Failed to fetch user settings:", error);
       }
     };

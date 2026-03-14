@@ -1,5 +1,6 @@
-import axios, { AxiosError } from "axios";
-import { API_BASE_URL, getAuthRedirectUrlAfterSignup } from "@/lib/constants/api";
+import { AxiosError } from "axios";
+import { apiClient } from "@/lib/api-client";
+import { getAuthRedirectUrlAfterSignup } from "@/lib/constants/api";
 import { ApiResponse, ApiError } from "../types";
 
 interface SignupPayload {
@@ -31,36 +32,20 @@ export const signupWithEmailAndPassword = async (
     };
 
 
-    const response = await axios.post<ApiResponse<null>>(
-      `${API_BASE_URL}/auth/signup`,
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        params: {
-        },
-      }
+    const response = await apiClient.post<ApiResponse<null>>(
+      "/auth/signup",
+      payload
     );
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-      // Return formatted error response
-      throw {
-        message: axiosError.response?.data?.message || "Signup failed. Please try again.",
-        success: false,
-        data: null,
-        errors: axiosError.response?.data?.errors,
-      };
-    }
-
-    // Handle non-axios errors
+    const axiosError = error as AxiosError<ApiError>;
+    // Return formatted error response
     throw {
-      message: "An unexpected error occurred. Please try again.",
+      message: axiosError.response?.data?.message || "Signup failed. Please try again.",
       success: false,
       data: null,
+      errors: axiosError.response?.data?.errors,
     };
   }
 };

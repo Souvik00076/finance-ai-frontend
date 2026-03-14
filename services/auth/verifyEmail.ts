@@ -1,5 +1,5 @@
-import axios, { AxiosError } from "axios";
-import { API_BASE_URL } from "@/lib/constants/api";
+import { AxiosError } from "axios";
+import { apiClient } from "@/lib/api-client";
 import { ApiResponse, ApiError, VerifyEmailData } from "../types";
 
 interface VerifyEmailPayload {
@@ -23,37 +23,23 @@ export const verifyEmail = async (
       email,
     };
 
-    const response = await axios.post<ApiResponse<VerifyEmailData>>(
-      `${API_BASE_URL}/auth/verify-email`,
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+    const response = await apiClient.post<ApiResponse<VerifyEmailData>>(
+      "/auth/verify-email",
+      payload
     );
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
+    const axiosError = error as AxiosError<ApiError>;
 
-      // Return formatted error response
-      throw {
-        message:
-          axiosError.response?.data?.message ||
-          "Email verification failed. Please try again.",
-        success: false,
-        data: null,
-        errors: axiosError.response?.data?.errors,
-      };
-    }
-
-    // Handle non-axios errors
+    // Return formatted error response
     throw {
-      message: "An unexpected error occurred. Please try again.",
+      message:
+        axiosError.response?.data?.message ||
+        "Email verification failed. Please try again.",
       success: false,
       data: null,
+      errors: axiosError.response?.data?.errors,
     };
   }
 };

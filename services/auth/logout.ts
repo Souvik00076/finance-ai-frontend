@@ -1,5 +1,5 @@
-import axios, { AxiosError } from "axios";
-import { API_BASE_URL } from "@/lib/constants/api";
+import { AxiosError } from "axios";
+import { apiClient } from "@/lib/api-client";
 import { ApiResponse, ApiError } from "../types";
 
 /**
@@ -9,38 +9,23 @@ import { ApiResponse, ApiError } from "../types";
  */
 export const logout = async (): Promise<ApiResponse<null>> => {
   try {
-    const response = await axios.post<ApiResponse<null>>(
-      `${API_BASE_URL}/auth/logout`,
-      {},
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        withCredentials: true, // Important: This ensures cookies are sent and cleared
-      }
+    const response = await apiClient.post<ApiResponse<null>>(
+      "/auth/logout",
+      {}
     );
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
+    const axiosError = error as AxiosError<ApiError>;
 
-      // Return formatted error response
-      throw {
-        message:
-          axiosError.response?.data?.message ||
-          "Logout failed. Please try again.",
-        success: false,
-        data: null,
-        errors: axiosError.response?.data?.errors,
-      };
-    }
-
-    // Handle non-axios errors
+    // Return formatted error response
     throw {
-      message: "An unexpected error occurred. Please try again.",
+      message:
+        axiosError.response?.data?.message ||
+        "Logout failed. Please try again.",
       success: false,
       data: null,
+      errors: axiosError.response?.data?.errors,
     };
   }
 };

@@ -34,14 +34,11 @@ export default function SettingsPage() {
             email_verified: response.data.email_verified,
             created_at: response.data.created_at,
           });
-          
+
           setName(response.data.full_name || "");
           setAvatarPreview(response.data.picture || "");
         }
       } catch (error: any) {
-        if (error?.status === 401 || error?.message === "Unauthorized") {
-          router.push("/home");
-        }
         console.error("Failed to fetch user settings:", error);
       } finally {
         setIsLoading(false);
@@ -73,10 +70,10 @@ export default function SettingsPage() {
     if (isLoggingOut) return;
 
     setIsLoggingOut(true);
-    
+
     try {
       const response = await logoutApi();
-      
+
       if (response.success) {
         logout();
         showSuccessToast("Logged out successfully!");
@@ -218,9 +215,9 @@ export default function SettingsPage() {
           </div>
 
           {/* Logout */}
-          <Button 
-            variant="outline" 
-            className="w-full text-destructive hover:text-destructive" 
+          <Button
+            variant="outline"
+            className="w-full text-destructive hover:text-destructive"
             onClick={handleLogout}
             disabled={isLoggingOut}
           >
