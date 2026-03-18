@@ -8,3 +8,5 @@ export { verifyEmail } from "./verifyEmail";
 export { loginWithEmailAndPassword } from "./login";
 export { logout } from "./logout";
 export { getUserSettings } from "./getUserSettings";
+export { linkWhatsapp } from "./linkWhatsapp";
+export { verifyWhatsappOtp } from "./verifyWhatsappOtp";

@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, User, Phone, LogOut, Loader2, Mail, Shield, Calendar } from "lucide-react";
+import { ArrowLeft, Camera, User, Phone, LogOut, Loader2, Mail, Shield, Calendar, CheckCircle2, MessageCircle, AlertCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { logout as logoutApi, getUserSettings } from "@/services/auth";
+import { logout as logoutApi, getUserSettings, linkWhatsapp, verifyWhatsappOtp } from "@/services/auth";
 import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
 
 export default function SettingsPage() {
@@ -20,6 +20,18 @@ export default function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // WhatsApp linking state
+  const [isPhoneLinked, setIsPhoneLinked] = useState(false);
+  const [canVerify, setCanVerify] = useState(false);
+  const [chatNumber, setChatNumber] = useState<string | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [whatsappError, setWhatsappError] = useState("");
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     const fetchUserSettings = async () => {
@@ -33,10 +45,16 @@ export default function SettingsPage() {
             provider: response.data.provider,
             email_verified: response.data.email_verified,
             created_at: response.data.created_at,
+            is_phone_linked: response.data.is_phone_linked,
+            can_verify: response.data.can_verify,
+            chat_number: response.data.chat_number,
           });
 
           setName(response.data.full_name || "");
           setAvatarPreview(response.data.picture || "");
+          setIsPhoneLinked(response.data.is_phone_linked || false);
+          setCanVerify(response.data.can_verify || false);
+          setChatNumber(response.data.chat_number || null);
         }
       } catch (error: any) {
         console.error("Failed to fetch user settings:", error);
@@ -84,6 +102,109 @@ export default function SettingsPage() {
       console.error("Logout error:", error);
     } finally {
       setIsLoggingOut(false);
+    }
+  };
+
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Must start with + followed by country code and number (min 10 digits total)
+    const phoneRegex = /^\+[1-9]\d{9,14}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const handleSendOtp = async () => {
+    setWhatsappError("");
+
+    if (!whatsappNumber.trim()) {
+      setWhatsappError("Please enter your WhatsApp number");
+      return;
+    }
+
+    if (!whatsappNumber.startsWith("+")) {
+      setWhatsappError("Number must start with country code (e.g., +91)");
+      return;
+    }
+
+    if (!validatePhoneNumber(whatsappNumber)) {
+      setWhatsappError("Please enter a valid phone number with country code (e.g., +919876543210)");
+      return;
+    }
+
+    setIsSendingOtp(true);
+
+    try {
+      const response = await linkWhatsapp(whatsappNumber);
+      if (response.success) {
+        setOtpSent(true);
+        showSuccessToast("OTP sent to your WhatsApp number!");
+      }
+    } catch (error: any) {
+      showErrorToast(error?.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = useCallback(async (otpValue: string) => {
+    setIsVerifyingOtp(true);
+
+    try {
+      const response = await verifyWhatsappOtp(whatsappNumber, otpValue);
+      if (response.success) {
+        setIsPhoneLinked(true);
+        setUserData({ ...user, is_phone_linked: true });
+        showSuccessToast("WhatsApp number verified successfully!");
+        setOtpSent(false);
+        setOtp(["", "", "", "", "", ""]);
+        setWhatsappNumber("");
+      }
+    } catch (error: any) {
+      showErrorToast(error?.message || "OTP verification failed. Please try again.");
+      setOtp(["", "", "", "", "", ""]);
+      otpInputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [whatsappNumber, user]);
+
+  const handleOtpChange = (index: number, value: string) => {
+    // Only allow single digit
+    if (value.length > 1) {
+      value = value.slice(-1);
+    }
+
+    if (value && !/^\d$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Move to next input on entering a digit
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-verify when all 6 digits are filled
+    const fullOtp = newOtp.join("");
+    if (fullOtp.length === 6 && newOtp.every((d) => d !== "")) {
+      handleVerifyOtp(fullOtp);
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      const newOtp = pastedData.split("");
+      setOtp(newOtp);
+      otpInputRefs.current[5]?.focus();
+      handleVerifyOtp(pastedData);
     }
   };
 
@@ -201,6 +322,151 @@ export default function SettingsPage() {
             <Button onClick={handleSave} className="w-full">
               Save Changes
             </Button>
+          </div>
+
+          {/* WhatsApp Linking */}
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageCircle className="w-5 h-5 text-green-500" />
+              <h3 className="text-sm font-medium">WhatsApp Integration</h3>
+            </div>
+
+            {isPhoneLinked ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                      WhatsApp Verified
+                    </p>
+                    <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-0.5">
+                      Your WhatsApp number is linked and verified.
+                    </p>
+                  </div>
+                </div>
+                {chatNumber && (
+                  <button
+                    onClick={() => {
+                      const cleanNumber = chatNumber.replace(/\D/g, '');
+                      window.open(`https://wa.me/${cleanNumber}`, '_blank');
+                    }}
+                    className="w-full flex items-center gap-3 p-4 rounded-lg bg-secondary hover:bg-secondary/80 border border-border transition-colors group"
+                  >
+                    <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Send expenses to:
+                      </p>
+                      <p className="text-sm font-semibold text-foreground mt-0.5 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                        {chatNumber}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors" />
+                  </button>
+                )}
+              </motion.div>
+            ) : canVerify ? (
+              <div className="space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Link your WhatsApp number to receive notifications and manage expenses via chat.
+                </p>
+
+                {!otpSent ? (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
+                      <Input
+                        id="whatsapp-number"
+                        type="tel"
+                        placeholder="+919876543210"
+                        value={whatsappNumber}
+                        onChange={(e) => {
+                          setWhatsappNumber(e.target.value);
+                          setWhatsappError("");
+                        }}
+                        className={whatsappError ? "border-destructive" : ""}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Include your country code (e.g., +91 for India, +1 for US)
+                      </p>
+                      {whatsappError && (
+                        <p className="text-xs text-destructive">{whatsappError}</p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleSendOtp}
+                      disabled={isSendingOtp || !whatsappNumber.trim()}
+                      className="w-full"
+                    >
+                      {isSendingOtp ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending OTP...
+                        </>
+                      ) : (
+                        <>
+                          <Phone className="w-4 h-4 mr-2" />
+                          Verify
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="p-3 rounded-lg bg-secondary text-sm text-center">
+                      <p className="text-muted-foreground">
+                        OTP sent to <span className="font-medium text-foreground">{whatsappNumber}</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Enter 6-digit OTP</Label>
+                      <div className="flex items-center justify-center gap-2">
+                        {otp.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={(el) => {
+                              otpInputRefs.current[index] = el;
+                            }}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(index, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                            onPaste={index === 0 ? handleOtpPaste : undefined}
+                            disabled={isVerifyingOtp}
+                            className="w-10 h-12 text-center text-lg font-semibold rounded-lg border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:opacity-50"
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {isVerifyingOtp && (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Verifying...
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
+                <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  WhatsApp verification is not available at this time.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Theme */}

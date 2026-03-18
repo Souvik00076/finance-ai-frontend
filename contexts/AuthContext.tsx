@@ -13,6 +13,9 @@ interface User {
   provider?: string;
   email_verified?: boolean;
   created_at?: string;
+  is_phone_linked?: boolean;
+  can_verify?: boolean;
+  chat_number?: string;
 }
 
 interface AuthContextType {
