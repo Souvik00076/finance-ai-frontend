@@ -10,3 +10,4 @@ export { logout } from "./logout";
 export { getUserSettings } from "./getUserSettings";
 export { linkWhatsapp } from "./linkWhatsapp";
 export { verifyWhatsappOtp } from "./verifyWhatsappOtp";
+export { linkTelegram } from "./linkTelegram";

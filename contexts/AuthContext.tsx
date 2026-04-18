@@ -16,6 +16,8 @@ interface User {
   is_phone_linked?: boolean;
   can_verify?: boolean;
   chat_number?: string;
+  is_telegram_linked?: boolean;
+  total_spent?: number;
 }
 
 interface AuthContextType {

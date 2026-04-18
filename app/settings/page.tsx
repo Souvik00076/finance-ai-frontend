@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, User, Phone, LogOut, Loader2, Mail, Shield, Calendar, CheckCircle2, MessageCircle, AlertCircle, ArrowRight } from "lucide-react";
+import { ArrowLeft, Camera, User, Phone, LogOut, Loader2, Mail, Shield, Calendar, CheckCircle2, MessageCircle, AlertCircle, ArrowRight, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { logout as logoutApi, getUserSettings, linkWhatsapp, verifyWhatsappOtp } from "@/services/auth";
+import { logout as logoutApi, getUserSettings, linkWhatsapp, verifyWhatsappOtp, linkTelegram } from "@/services/auth";
 import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
 
 export default function SettingsPage() {
@@ -33,6 +33,12 @@ export default function SettingsPage() {
   const [whatsappError, setWhatsappError] = useState("");
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Telegram linking state
+  const [isTelegramLinked, setIsTelegramLinked] = useState(false);
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [isLinkingTelegram, setIsLinkingTelegram] = useState(false);
+  const [telegramError, setTelegramError] = useState("");
+
   useEffect(() => {
     const fetchUserSettings = async () => {
       try {
@@ -48,6 +54,8 @@ export default function SettingsPage() {
             is_phone_linked: response.data.is_phone_linked,
             can_verify: response.data.can_verify,
             chat_number: response.data.chat_number,
+            is_telegram_linked: response.data.is_telegram_linked,
+            total_spent: response.data.total_spent,
           });
 
           setName(response.data.full_name || "");
@@ -55,6 +63,7 @@ export default function SettingsPage() {
           setIsPhoneLinked(response.data.is_phone_linked || false);
           setCanVerify(response.data.can_verify || false);
           setChatNumber(response.data.chat_number || null);
+          setIsTelegramLinked(response.data.is_telegram_linked || false);
         }
       } catch (error: any) {
         console.error("Failed to fetch user settings:", error);
@@ -197,6 +206,31 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLinkTelegram = async () => {
+    setTelegramError("");
+
+    if (!telegramChatId.trim()) {
+      setTelegramError("Please enter your Telegram Chat ID");
+      return;
+    }
+
+    setIsLinkingTelegram(true);
+
+    try {
+      const response = await linkTelegram(telegramChatId.trim());
+      if (response.success) {
+        setIsTelegramLinked(true);
+        setUserData({ ...user, is_telegram_linked: true });
+        showSuccessToast("Telegram linked successfully!");
+        setTelegramChatId("");
+      }
+    } catch (error: any) {
+      showErrorToast(error?.message || "Failed to link Telegram. Please try again.");
+    } finally {
+      setIsLinkingTelegram(false);
+    }
+  };
+
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").trim();
@@ -231,7 +265,7 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-10">
+      <main className="max-w-4xl mx-auto px-4 py-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -241,6 +275,10 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold">Settings</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage your profile and preferences</p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column - Profile */}
+          <div className="space-y-6">
 
           {/* Avatar */}
           <div className="glass-card p-6">
@@ -323,6 +361,42 @@ export default function SettingsPage() {
               Save Changes
             </Button>
           </div>
+
+          {/* Theme */}
+          <div className="glass-card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium">Theme</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Toggle between light and dark mode</p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+
+          {/* Logout */}
+          <Button
+            variant="outline"
+            className="w-full text-destructive hover:text-destructive"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Logging out...
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </>
+            )}
+          </Button>
+
+          </div>
+
+          {/* Right Column - Integrations */}
+          <div className="space-y-6">
 
           {/* WhatsApp Linking */}
           <div className="glass-card p-6">
@@ -469,36 +543,92 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* Theme */}
+          {/* Telegram Integration */}
           <div className="glass-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium">Theme</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Toggle between light and dark mode</p>
-              </div>
-              <ThemeToggle />
+            <div className="flex items-center gap-2 mb-4">
+              <Send className="w-5 h-5 text-blue-500" />
+              <h3 className="text-sm font-medium">Telegram Integration</h3>
             </div>
+
+            {isTelegramLinked ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      Telegram Connected
+                    </p>
+                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-0.5">
+                      Your Telegram account is linked. You can send expenses via the bot.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-secondary/50 border border-border/50 space-y-2">
+                  <p className="text-xs font-medium text-foreground">How to connect:</p>
+                  <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>
+                      Open the Spendly bot on Telegram:{" "}
+                      <a
+                        href="https://t.me/spendly_by_souvik_bot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline font-medium"
+                      >
+                        t.me/spendly_by_souvik_bot
+                      </a>
+                    </li>
+                    <li>Send <span className="font-medium text-foreground">Spendly</span> as a message to the bot</li>
+                    <li>Copy the Chat ID you receive</li>
+                    <li>Paste the Chat ID below and submit</li>
+                  </ol>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telegram-chat-id">Telegram Chat ID</Label>
+                  <Input
+                    id="telegram-chat-id"
+                    type="text"
+                    placeholder="Enter your Chat ID"
+                    value={telegramChatId}
+                    onChange={(e) => {
+                      setTelegramChatId(e.target.value);
+                      setTelegramError("");
+                    }}
+                    className={telegramError ? "border-destructive" : ""}
+                  />
+                  {telegramError && (
+                    <p className="text-xs text-destructive">{telegramError}</p>
+                  )}
+                </div>
+                <Button
+                  onClick={handleLinkTelegram}
+                  disabled={isLinkingTelegram || !telegramChatId.trim()}
+                  className="w-full"
+                >
+                  {isLinkingTelegram ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Connect Telegram
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Logout */}
-          <Button
-            variant="outline"
-            className="w-full text-destructive hover:text-destructive"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Logging out...
-              </>
-            ) : (
-              <>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </>
-            )}
-          </Button>
+          </div>
+          </div>
         </motion.div>
       </main>
     </div>
