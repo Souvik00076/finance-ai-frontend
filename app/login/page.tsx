@@ -11,6 +11,7 @@ import { GoogleIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupWithEmailAndPassword, loginWithEmailAndPassword } from "@/services/auth";
 import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
+import { apiClient } from "@/lib/api-client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -79,13 +80,16 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // TODO: Implement Google OAuth
-      login("google-user@gmail.com");
-      showSuccessToast("Logged in with Google successfully!");
-      router.push("/");
+      const response = await apiClient.get("/auth/oauth/google");
+      const redirectUri = response.data?.data?.redirect_url;
+      if (redirectUri) {
+        window.location.href = redirectUri;
+      } else {
+        showErrorToast("Failed to get Google login URL");
+        setIsLoading(false);
+      }
     } catch (error: any) {
       showErrorToast(error?.message || "Failed to login with Google");
-    } finally {
       setIsLoading(false);
     }
   };
