@@ -583,7 +583,7 @@ export default function SettingsPage() {
                         t.me/spendly_by_souvik_bot
                       </a>
                     </li>
-                    <li>Send <span className="font-medium text-foreground">Spendly</span> as a message to the bot</li>
+                    <li>Send <span className="font-medium text-foreground">/start</span> to the bot</li>
                     <li>Copy the Chat ID you receive</li>
                     <li>Paste the Chat ID below and submit</li>
                   </ol>

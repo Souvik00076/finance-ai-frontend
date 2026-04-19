@@ -77,8 +77,17 @@ export default function DashboardPage() {
       </main>
 
       {/* Link WhatsApp / Telegram Dialog */}
-      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={showLinkDialog}
+        onOpenChange={(open) => {
+          // Prevent closing if neither Telegram nor Phone is linked
+          if (!open && user && !user.is_telegram_linked && !user.is_phone_linked) {
+            return;
+          }
+          setShowLinkDialog(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle className="text-lg">Connect a Messaging Platform</DialogTitle>
             <DialogDescription>
@@ -118,7 +127,7 @@ export default function DashboardPage() {
                     t.me/spendly_by_souvik_bot
                   </a>
                 </li>
-                <li>Send <span className="font-medium text-foreground">Spendly</span> to the bot</li>
+                <li>Send <span className="font-medium text-foreground">/start</span> to the bot</li>
                 <li>Copy the Chat ID and paste it in <span className="font-medium text-foreground">Settings</span></li>
               </ol>
             </div>
