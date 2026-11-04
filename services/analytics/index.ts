@@ -13,3 +13,10 @@ export { getMonthlyTrend } from "./getMonthlyTrend";
 export type { MonthlyTrendItem } from "./getMonthlyTrend";
 export { getStatistics } from "./getStatistics";
 export type { StatisticsData } from "./getStatistics";
+export {
+  getIncomeStatistics,
+  getIncomeMonthlyTrend,
+  getIncomeCategoryBreakdown,
+  getRecentIncome,
+} from "./income";
+export type { IncomeStatisticsData, RecentIncomeItem } from "./income";

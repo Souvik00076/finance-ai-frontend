@@ -72,7 +72,7 @@ export default function HomePage() {
               <span className="gradient-text">effortlessly</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Just send your expenses via WhatsApp. We handle the rest — categorization,
+              Just send your expenses and earnings via WhatsApp. We handle the rest — categorization,
               analytics, and beautiful insights, all in real time.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

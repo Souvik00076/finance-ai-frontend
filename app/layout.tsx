@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Spendly - Track Expenses Effortlessly",
-  description: "Track your expenses via WhatsApp. AI-powered categorization and beautiful analytics.",
+  description: "Track your expenses and income via WhatsApp. AI-powered categorization and beautiful analytics.",
 };
 
 export default function RootLayout({

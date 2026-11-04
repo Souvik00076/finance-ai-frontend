@@ -18,6 +18,7 @@ interface User {
   chat_number?: string;
   is_telegram_linked?: boolean;
   total_spent?: number;
+  total_earned?: number;
 }
 
 interface AuthContextType {

@@ -19,7 +19,7 @@ export function DashboardHeader() {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">Spendly</h1>
-            <p className="text-xs text-muted-foreground">WhatsApp-powered expense tracking</p>
+            <p className="text-xs text-muted-foreground">WhatsApp-powered expense & income tracking</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

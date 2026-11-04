@@ -7,7 +7,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
 import { CategoryBreakdown } from "@/components/dashboard/CategoryBreakdown";
-import { RecentExpenses } from "@/components/dashboard/RecentExpenses";
+import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { MonthlyBarChart } from "@/components/dashboard/MonthlyBarChart";
 import { getUserSettings } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +40,7 @@ export default function DashboardPage() {
             is_phone_linked: response.data.is_phone_linked,
             is_telegram_linked: response.data.is_telegram_linked,
             total_spent: response.data.total_spent,
+            total_earned: response.data.total_earned ?? 0,
           });
 
           // Show dialog if neither is linked
@@ -71,7 +72,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <RecentExpenses />
+          <RecentTransactions />
           <MonthlyBarChart />
         </div>
       </main>
@@ -91,7 +92,7 @@ export default function DashboardPage() {
           <DialogHeader>
             <DialogTitle className="text-lg">Connect a Messaging Platform</DialogTitle>
             <DialogDescription>
-              Link WhatsApp or Telegram to start tracking your expenses by simply sending a message.
+              Link WhatsApp or Telegram to start tracking your expenses and income by simply sending a message.
             </DialogDescription>
           </DialogHeader>
 

@@ -56,6 +56,7 @@ export default function SettingsPage() {
             chat_number: response.data.chat_number,
             is_telegram_linked: response.data.is_telegram_linked,
             total_spent: response.data.total_spent,
+            total_earned: response.data.total_earned ?? 0,
           });
 
           setName(response.data.full_name || "");

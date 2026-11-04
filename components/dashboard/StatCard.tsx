@@ -9,10 +9,30 @@ interface StatCardProps {
   subtitle?: string;
   icon: LucideIcon;
   trend?: { value: number; label: string };
+  /** Up is good (income): up = green, down = red. Default is spending: up = red. */
+  invertTrend?: boolean;
+  /** Extra classes for the value, e.g. a green/red colour for net amounts. */
+  valueClassName?: string;
   delay?: number;
 }
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, delay = 0 }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  trend,
+  invertTrend = false,
+  valueClassName = "",
+  delay = 0,
+}: StatCardProps) {
+  const upIsBad = !invertTrend;
+  const trendClass = trend
+    ? (trend.value >= 0) === upIsBad
+      ? "text-expense"
+      : "text-success"
+    : "";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -27,12 +47,12 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, delay = 0 
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        <p className={`text-2xl font-bold tracking-tight ${valueClassName}`}>{value}</p>
         {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
       </div>
       {trend && (
         <div className="flex items-center gap-1.5">
-          <span className={`text-xs font-medium ${trend.value >= 0 ? "text-expense" : "text-success"}`}>
+          <span className={`text-xs font-medium ${trendClass}`}>
             {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
           </span>
           <span className="text-xs text-muted-foreground">{trend.label}</span>

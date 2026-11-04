@@ -41,6 +41,7 @@ export interface UserSettings {
   chat_number?: string;
   is_telegram_linked: boolean;
   total_spent: number;
+  total_earned?: number;
 }
 
 export interface VerifyEmailData {
