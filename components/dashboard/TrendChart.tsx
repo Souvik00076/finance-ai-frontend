@@ -15,7 +15,7 @@ const COLORS = {
   expense: "hsl(168, 80%, 50%)", // brand teal, as before
   income: "hsl(152, 60%, 48%)",
   bothExpense: "hsl(0, 72%, 55%)", // red when shown next to income
-  previous: "hsl(215, 12%, 50%)",
+  previous: "hsl(38, 92%, 55%)", // amber: stands out from teal/green/red in both themes
 };
 
 const tooltipStyle = {
@@ -145,11 +145,18 @@ export function TrendChart({ range, previousRange }: TrendChartProps) {
               onClick={() => setCompare((c) => !c)}
               aria-pressed={compare}
               className={`text-xs px-2.5 py-1 rounded-md border transition-colors whitespace-nowrap ${
-                compare ? "border-primary/40 text-foreground bg-primary/10" : "border-border text-muted-foreground"
+                compare ? "border-amber-400/50 text-amber-500 bg-amber-400/10" : "border-border text-muted-foreground"
               }`}
               title={`Overlay ${previousRange?.label}`}
             >
-              vs {previousRange?.shortLabel}
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="inline-block w-3 border-t-2 border-dashed"
+                  style={{ borderColor: compare ? COLORS.previous : "currentColor" }}
+                />
+                vs {previousRange?.shortLabel}
+              </span>
             </button>
           )}
           <div className="flex items-center gap-1 p-0.5 rounded-lg bg-secondary/60" role="tablist" aria-label="Series">
@@ -238,7 +245,7 @@ export function TrendChart({ range, previousRange }: TrendChartProps) {
                       type="monotone"
                       dataKey="previous"
                       stroke={COLORS.previous}
-                      strokeWidth={1.5}
+                      strokeWidth={2}
                       strokeDasharray="4 4"
                       dot={false}
                       connectNulls
