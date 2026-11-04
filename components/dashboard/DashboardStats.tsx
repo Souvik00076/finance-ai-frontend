@@ -19,7 +19,6 @@ import {
   StatisticsData,
   IncomeStatisticsData,
 } from "@/services/analytics";
-import { useAuth } from "@/contexts/AuthContext";
 
 const rupees = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
@@ -30,7 +29,6 @@ const percentChange = (current: number, previous: number): number | null => {
 };
 
 export function DashboardStats() {
-  const { user } = useAuth();
   const [stats, setStats] = useState<StatisticsData | null>(null);
   const [income, setIncome] = useState<IncomeStatisticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +110,7 @@ export function DashboardStats() {
         />
         <StatCard
           title="All Time"
-          value={rupees(user?.total_spent ?? 0)}
+          value={stats?.all_time_spend != null ? rupees(stats.all_time_spend) : "—"}
           icon={Wallet}
           subtitle="Total spent"
           delay={0.15}
@@ -148,7 +146,7 @@ export function DashboardStats() {
         />
         <StatCard
           title="All Time Earned"
-          value={rupees(user?.total_earned ?? 0)}
+          value={income?.all_time_earned != null ? rupees(income.all_time_earned) : "—"}
           icon={Landmark}
           subtitle="Total income"
           delay={0.35}

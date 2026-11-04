@@ -8,6 +8,7 @@ export interface StatisticsData {
   last_14_days_spend: number;
   last_month_spend: number;
   last_2_months_spend: number;
+  all_time_spend: number;        // aggregated from expense data
 }
 
 /**

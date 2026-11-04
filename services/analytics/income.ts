@@ -10,6 +10,7 @@ export interface IncomeStatisticsData {
   last_14_days_earned: number;
   last_month_earned: number;     // current calendar month
   last_2_months_earned: number;  // current + previous calendar month
+  all_time_earned: number;       // aggregated from income data
 }
 
 export interface RecentIncomeItem {
