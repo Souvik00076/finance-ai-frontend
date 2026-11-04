@@ -1,5 +1,9 @@
 export { StatCard } from "./StatCard";
-export { ExpenseChart } from "./ExpenseChart";
+export { TrendChart } from "./TrendChart";
+export { PeriodSelector } from "./PeriodSelector";
+export { PeriodAnalytics } from "./PeriodAnalytics";
+export { TopExpenses } from "./TopExpenses";
+export { WeekdayPattern } from "./WeekdayPattern";
 export { CategoryBreakdown } from "./CategoryBreakdown";
 export { RecentTransactions } from "./RecentTransactions";
 export { MonthlyBarChart } from "./MonthlyBarChart";
