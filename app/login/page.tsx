@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { signupWithEmailAndPassword, loginWithEmailAndPassword } from "@/services/auth";
 import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
 import { apiClient } from "@/lib/api-client";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -61,14 +62,15 @@ export default function LoginPage() {
           router.push("/");
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle error from API
-      const errorMessage = error?.message || "Something went wrong. Please try again.";
+      const errorMessage = getErrorMessage(error, "Something went wrong. Please try again.");
       showErrorToast(errorMessage);
 
       // Log detailed errors if available
-      if (error?.errors) {
-        console.error("Validation errors:", error.errors);
+      const errors = (error as { errors?: unknown } | null)?.errors;
+      if (errors) {
+        console.error("Validation errors:", errors);
       }
     } finally {
       setIsLoading(false);
@@ -88,8 +90,8 @@ export default function LoginPage() {
         showErrorToast("Failed to get Google login URL");
         setIsLoading(false);
       }
-    } catch (error: any) {
-      showErrorToast(error?.message || "Failed to login with Google");
+    } catch (error: unknown) {
+      showErrorToast(getErrorMessage(error, "Failed to login with Google"));
       setIsLoading(false);
     }
   };

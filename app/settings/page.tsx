@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { logout as logoutApi, getUserSettings, linkWhatsapp, verifyWhatsappOtp, linkTelegram } from "@/services/auth";
 import { showSuccessToast, showErrorToast } from "@/lib/utils/toast";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 export default function SettingsPage() {
   const { user, updateProfile, logout, setUserData } = useAuth();
@@ -66,7 +67,7 @@ export default function SettingsPage() {
           setChatNumber(response.data.chat_number || null);
           setIsTelegramLinked(response.data.is_telegram_linked || false);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to fetch user settings:", error);
       } finally {
         setIsLoading(false);
@@ -107,8 +108,8 @@ export default function SettingsPage() {
         showSuccessToast("Logged out successfully!");
         router.push("/home");
       }
-    } catch (error: any) {
-      showErrorToast(error?.message || "Failed to logout. Please try again.");
+    } catch (error: unknown) {
+      showErrorToast(getErrorMessage(error, "Failed to logout. Please try again."));
       console.error("Logout error:", error);
     } finally {
       setIsLoggingOut(false);
@@ -147,8 +148,8 @@ export default function SettingsPage() {
         setOtpSent(true);
         showSuccessToast("OTP sent to your WhatsApp number!");
       }
-    } catch (error: any) {
-      showErrorToast(error?.message || "Failed to send OTP. Please try again.");
+    } catch (error: unknown) {
+      showErrorToast(getErrorMessage(error, "Failed to send OTP. Please try again."));
     } finally {
       setIsSendingOtp(false);
     }
@@ -167,8 +168,8 @@ export default function SettingsPage() {
         setOtp(["", "", "", "", "", ""]);
         setWhatsappNumber("");
       }
-    } catch (error: any) {
-      showErrorToast(error?.message || "OTP verification failed. Please try again.");
+    } catch (error: unknown) {
+      showErrorToast(getErrorMessage(error, "OTP verification failed. Please try again."));
       setOtp(["", "", "", "", "", ""]);
       otpInputRefs.current[0]?.focus();
     } finally {
@@ -225,8 +226,8 @@ export default function SettingsPage() {
         showSuccessToast("Telegram linked successfully!");
         setTelegramChatId("");
       }
-    } catch (error: any) {
-      showErrorToast(error?.message || "Failed to link Telegram. Please try again.");
+    } catch (error: unknown) {
+      showErrorToast(getErrorMessage(error, "Failed to link Telegram. Please try again."));
     } finally {
       setIsLinkingTelegram(false);
     }

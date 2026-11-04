@@ -1,7 +1,7 @@
 /**
  * Standard API Response type for all backend responses
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   message: string;
   success: boolean;
   data: T;

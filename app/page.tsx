@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Send, ArrowRight, X } from "lucide-react";
+import { MessageCircle, Send, ArrowRight } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
@@ -48,7 +48,7 @@ export default function DashboardPage() {
             setShowLinkDialog(true);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to fetch user settings:", error);
       }
     };

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { verifyEmail } from "@/services/auth";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 type VerificationState = "loading" | "success" | "error" | "missing-params";
 
@@ -43,12 +44,11 @@ function VerifyContent() {
         setState("error");
         setMessage(response.message || "Verification failed. Please try again.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Verification error:", error);
       setState("error");
       setMessage(
-        error?.message || 
-        "Failed to verify your email. The link may have expired or is invalid."
+        getErrorMessage(error, "Failed to verify your email. The link may have expired or is invalid.")
       );
     }
   }, []);

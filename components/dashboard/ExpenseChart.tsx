@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Loader2 } from "lucide-react";
 import { getDailyTrend, DailyTrendItem } from "@/services/analytics";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 export function ExpenseChart() {
   const [data, setData] = useState<DailyTrendItem[]>([]);
@@ -18,9 +19,9 @@ export function ExpenseChart() {
         if (response.success && response.data) {
           setData(response.data);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch daily trend:", err);
-        setError(err?.message || "Failed to load trend data");
+        setError(getErrorMessage(err, "Failed to load trend data"));
       } finally {
         setIsLoading(false);
       }
